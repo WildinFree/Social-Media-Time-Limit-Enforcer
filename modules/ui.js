@@ -1,75 +1,71 @@
 // modules/ui.js
+// Handles all DOM manipulation and UI rendering.
 
-// ==UserScript==
-// @name         Social Media Time Limit Enforcer - UI
-// @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  UI components for the Social Media Time Limit Enforcer script.
-// @author       You
-// ==/UserScript==
+var SMTLE = window.SMTLE || {};
 
-let warningStart = null;
-let isPaused = false;
+SMTLE.ui = {
+    warningStart: null,
+    isPaused: false,
 
-function formatTime(ms) {
-    const total = Math.max(0, Math.floor(ms / 1000));
-    const min = Math.floor(total / 60);
-    const sec = total % 60;
-    return `${min}m ${sec}s`;
-}
+    formatTime: function(ms) {
+        const total = Math.max(0, Math.floor(ms / 1000));
+        const min = Math.floor(total / 60);
+        const sec = total % 60;
+        return `${min}m ${sec}s`;
+    },
 
-function injectTimerDisplay() {
-    let div = document.getElementById("__wildinfree_timer__");
-    if (!div) {
-        div = document.createElement("div");
-        div.id = "__wildinfree_timer__";
-        Object.assign(div.style, {
-            position: "fixed",
-            bottom: "10px",
-            right: "10px",
-            background: "#000",
-            color: "#0f0",
-            padding: "6px 12px",
-            fontSize: "14px",
-            fontFamily: "monospace",
-            zIndex: 999999,
-            borderRadius: "6px",
-            opacity: "0.85",
-            pointerEvents: "none"
-        });
-        document.body.appendChild(div);
-    }
-    return div;
-}
+    injectTimerDisplay: function() {
+        let div = document.getElementById("__wildinfree_timer__");
+        if (!div) {
+            div = document.createElement("div");
+            div.id = "__wildinfree_timer__";
+            Object.assign(div.style, {
+                position: "fixed",
+                bottom: "10px",
+                right: "10px",
+                background: "#000",
+                color: "#0f0",
+                padding: "6px 12px",
+                fontSize: "14px",
+                fontFamily: "monospace",
+                zIndex: 999999,
+                borderRadius: "6px",
+                opacity: "0.85",
+                pointerEvents: "none"
+            });
+            document.body.appendChild(div);
+        }
+        return div;
+    },
 
-function updateTimerDisplay(state) {
-    const div = injectTimerDisplay();
-    const now = Date.now();
-    const elapsed = isPaused ? (state.pausedTime - state.start) : (now - state.start);
-    const remaining = state.duration - elapsed;
-    const dailyState = getDailyState();
-    const dailyRemaining = Math.max(0, SMTLE_CONFIG.DAILY_MAX_MS - dailyState.totalUsed);
+    updateTimerDisplay: function(state) {
+        const div = this.injectTimerDisplay();
+        const now = Date.now();
+        const elapsed = this.isPaused ? (state.pausedTime - state.start) : (now - state.start);
+        const remaining = state.duration - elapsed;
+        const dailyState = SMTLE.state.getDailyState();
+        const dailyRemaining = Math.max(0, SMTLE.config.DAILY_MAX_MS - dailyState.totalUsed);
 
-    if (remaining > 0) {
-        div.textContent = `✅ Active for: ${formatTime(elapsed)} | Remaining: ${formatTime(remaining)} | Daily left: ${formatTime(dailyRemaining)}${isPaused ? ' | Paused' : ''}`;
-    } else {
-        const sinceExpired = now - (state.start + state.duration);
-        const countdown = Math.max(0, SMTLE_CONFIG.CLOSE_DELAY - sinceExpired);
-        div.textContent = `⛔ Time expired. Closing in: ${formatTime(countdown)} | Daily left: ${formatTime(dailyRemaining)}`;
-    }
-}
+        if (remaining > 0) {
+            div.textContent = `✅ Active for: ${this.formatTime(elapsed)} | Remaining: ${this.formatTime(remaining)} | Daily left: ${this.formatTime(dailyRemaining)}${this.isPaused ? ' | Paused' : ''}`;
+        } else {
+            const sinceExpired = now - (state.start + state.duration);
+            const countdown = Math.max(0, SMTLE.config.CLOSE_DELAY - sinceExpired);
+            div.textContent = `⛔ Time expired. Closing in: ${this.formatTime(countdown)} | Daily left: ${this.formatTime(dailyRemaining)}`;
+        }
+    },
 
-function redirectToExpiryPage(state) {
-    fetch(SMTLE_CONFIG.GIF_URL)
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch expiry GIF');
-            return response.blob();
-        })
-        .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = function () {
-                const gifBase64 = reader.result;
-                const html = `
+    redirectToExpiryPage: function(state) {
+        fetch(SMTLE.config.GIF_URL)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch expiry GIF');
+                return response.blob();
+            })
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    const gifBase64 = reader.result;
+                    const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -339,23 +335,23 @@ function redirectToExpiryPage(state) {
     </div>
 </body>
 </html>
-                `;
-                const blob = new Blob([html], { type: "text/html" });
-                const url = URL.createObjectURL(blob);
-                window.location.href = url;
-            };
-            reader.readAsDataURL(blob);
-        })
-        .catch(e => {
-            console.error('Error redirecting to expiry page:', e);
-            alert('⚠️ Failed to load expiry page. Reloading...');
-            setTimeout(() => location.reload(), 500);
-        });
-}
+                    `;
+                    const blob = new Blob([html], { type: "text/html" });
+                    const url = URL.createObjectURL(blob);
+                    window.location.href = url;
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(e => {
+                console.error('Error redirecting to expiry page:', e);
+                alert('⚠️ Failed to load expiry page. Reloading...');
+                setTimeout(() => location.reload(), 500);
+            });
+    },
 
-function redirectToLimitPage() {
-    const siteName = location.hostname;
-    const html = `
+    redirectToLimitPage: function() {
+        const siteName = location.hostname;
+        const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -523,54 +519,54 @@ function redirectToLimitPage() {
     </div>
 </body>
 </html>
-    `;
-    try {
-        const blob = new Blob([html], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        window.location.href = url;
-    } catch (e) {
-        console.error('Error redirecting to limit page:', e);
-        alert('⚠️ Failed to load limit page. Reloading...');
-        setTimeout(() => location.reload(), 500);
-    }
-}
+        `;
+        try {
+            const blob = new Blob([html], { type: "text/html" });
+            const url = URL.createObjectURL(blob);
+            window.location.href = url;
+        } catch (e) {
+            console.error('Error redirecting to limit page:', e);
+            alert('⚠️ Failed to load limit page. Reloading...');
+            setTimeout(() => location.reload(), 500);
+        }
+    },
 
-function redirectToHistoryPage() {
-    const history = getHistory().sort((a, b) => b.start - a.start);
-    fetch(SMTLE_CONFIG.HISTORY_GIF_URL)
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch history GIF');
-            return response.blob();
-        })
-        .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = function () {
-                const gifBase64 = reader.result;
-                const historyItems = history.length === 0
-                    ? `
-                        <div class="no-history">
-                            <span class="no-history-icon">📜</span>
-                            <h2>No Purpose History Yet</h2>
-                            <p class="no-history-message">Start tracking your sessions to see your history here.</p>
-                        </div>
-                    `
-                    : history.map((entry, index) => `
-                        <div class="history-card" role="listitem" aria-labelledby="entry-${index}">
-                            <div class="card-header">
-                                <h2 class="card-title">Session ${index + 1}</h2>
-                                <p class="card-date">${new Date(entry.start).toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+    redirectToHistoryPage: function() {
+        const history = SMTLE.state.getHistory().sort((a, b) => b.start - a.start);
+        fetch(SMTLE.config.HISTORY_GIF_URL)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch history GIF');
+                return response.blob();
+            })
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    const gifBase64 = reader.result;
+                    const historyItems = history.length === 0
+                        ? `
+                            <div class="no-history">
+                                <span class="no-history-icon">📜</span>
+                                <h2>No Purpose History Yet</h2>
+                                <p class="no-history-message">Start tracking your sessions to see your history here.</p>
                             </div>
-                            <hr class="card-divider">
-                            <div class="card-content">
-                                <p><strong><span class="icon">🌐</span>Site:</strong> ${entry.site}</p>
-                                <p><strong><span class="icon">✍️</span>Purpose:</strong> ${entry.purpose}</p>
-                                <p><strong><span class="icon">⏳</span>Duration:</strong> ${entry.duration / 60000} minutes</p>
-                                <p><strong><span class="icon">📅</span>Started at:</strong> ${entry.timestamp}</p>
+                        `
+                        : history.map((entry, index) => `
+                            <div class="history-card" role="listitem" aria-labelledby="entry-${index}">
+                                <div class="card-header">
+                                    <h2 class="card-title">Session ${index + 1}</h2>
+                                    <p class="card-date">${new Date(entry.start).toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                                <hr class="card-divider">
+                                <div class="card-content">
+                                    <p><strong><span class="icon">🌐</span>Site:</strong> ${entry.site}</p>
+                                    <p><strong><span class="icon">✍️</span>Purpose:</strong> ${entry.purpose}</p>
+                                    <p><strong><span class="icon">⏳</span>Duration:</strong> ${entry.duration / 60000} minutes</p>
+                                    <p><strong><span class="icon">📅</span>Started at:</strong> ${entry.timestamp}</p>
+                                </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `).join('');
 
-                const html = `
+                    const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -919,16 +915,17 @@ function redirectToHistoryPage() {
     </script>
 </body>
 </html>
-                `;
-                const blob = new Blob([html], { type: "text/html" });
-                const url = URL.createObjectURL(blob);
-                window.location.href = url;
-            };
-            reader.readAsDataURL(blob);
-        })
-        .catch(e => {
-            console.error('Error redirecting to history page:', e);
-            alert('⚠️ Failed to load history page. Reloading...');
-            setTimeout(() => location.reload(), 500);
-        });
-}
+                    `;
+                    const blob = new Blob([html], { type: "text/html" });
+                    const url = URL.createObjectURL(blob);
+                    window.location.href = url;
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(e => {
+                console.error('Error redirecting to history page:', e);
+                alert('⚠️ Failed to load history page. Reloading...');
+                setTimeout(() => location.reload(), 500);
+            });
+    }
+};
