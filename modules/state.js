@@ -1,100 +1,97 @@
 // modules/state.js
+// Manages all interactions with localStorage.
 
-// ==UserScript==
-// @name         Social Media Time Limit Enforcer - State
-// @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  State management for the Social Media Time Limit Enforcer script.
-// @author       You
-// ==/UserScript==
+var SMTLE = window.SMTLE || {};
 
-function getTimerState() {
-    try {
-        return JSON.parse(localStorage.getItem(SMTLE_CONFIG.SITE_KEY) || 'null');
-    } catch (e) {
-        console.error('Error parsing timer state:', e);
-        return null;
-    }
-}
-
-function saveTimerState(state) {
-    try {
-        localStorage.setItem(SMTLE_CONFIG.SITE_KEY, JSON.stringify(state));
-    } catch (e) {
-        console.error('Error saving timer state:', e);
-    }
-}
-
-function clearTimerState() {
-    try {
-        localStorage.removeItem(SMTLE_CONFIG.SITE_KEY);
-    } catch (e) {
-        console.error('Error clearing timer state:', e);
-    }
-}
-
-function getHistory() {
-    try {
-        return JSON.parse(localStorage.getItem(SMTLE_CONFIG.HISTORY_KEY) || '[]');
-    } catch (e) {
-        console.error('Error parsing history:', e);
-        return [];
-    }
-}
-
-function saveHistory(history) {
-    try {
-        localStorage.setItem(SMTLE_CONFIG.HISTORY_KEY, JSON.stringify(history));
-    } catch (e) {
-        console.error('Error saving history:', e);
-        alert('⚠️ Failed to save history. Please try again.');
-    }
-}
-
-function getDailyState() {
-    try {
-        const state = JSON.parse(localStorage.getItem(SMTLE_CONFIG.DAILY_LIMIT_KEY) || '{}');
-        const today = new Date().toLocaleDateString();
-        if (state.date !== today) {
-            return { date: today, totalUsed: 0 };
+SMTLE.state = {
+    getTimerState: function() {
+        try {
+            return JSON.parse(localStorage.getItem(SMTLE.config.SITE_KEY) || 'null');
+        } catch (e) {
+            console.error('Error parsing timer state:', e);
+            return null;
         }
-        return state;
-    } catch (e) {
-        console.error('Error parsing daily state:', e);
-        return { date: new Date().toLocaleDateString(), totalUsed: 0 };
-    }
-}
+    },
 
-function saveDailyState(state) {
-    try {
-        localStorage.setItem(SMTLE_CONFIG.DAILY_LIMIT_KEY, JSON.stringify(state));
-    } catch (e) {
-        console.error('Error saving daily state:', e);
-    }
-}
+    saveTimerState: function(state) {
+        try {
+            localStorage.setItem(SMTLE.config.SITE_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error('Error saving timer state:', e);
+        }
+    },
 
-function getTempLimitState() {
-    try {
-        return JSON.parse(localStorage.getItem(SMTLE_CONFIG.TEMP_LIMIT_KEY) || 'null');
-    } catch (e) {
-        console.error('Error parsing temp limit state:', e);
-        return null;
-    }
-}
+    clearTimerState: function() {
+        try {
+            localStorage.removeItem(SMTLE.config.SITE_KEY);
+        } catch (e) {
+            console.error('Error clearing timer state:', e);
+        }
+    },
 
-function saveTempLimitState(state) {
-     try {
-        localStorage.setItem(SMTLE_CONFIG.TEMP_LIMIT_KEY, JSON.stringify(state));
-    } catch (e) {
-        console.error('Error setting temp limit:', e);
-        alert('⚠️ Failed to set temporary limit. Please try again.');
-    }
-}
+    getHistory: function() {
+        try {
+            return JSON.parse(localStorage.getItem(SMTLE.config.HISTORY_KEY) || '[]');
+        } catch (e) {
+            console.error('Error parsing history:', e);
+            return [];
+        }
+    },
 
-function clearTempLimitState() {
-    try {
-        localStorage.removeItem(SMTLE_CONFIG.TEMP_LIMIT_KEY);
-    } catch (e) {
-        console.error('Error clearing temp limit state:', e);
+    saveHistory: function(history) {
+        try {
+            localStorage.setItem(SMTLE.config.HISTORY_KEY, JSON.stringify(history));
+        } catch (e) {
+            console.error('Error saving history:', e);
+            alert('⚠️ Failed to save history. Please try again.');
+        }
+    },
+
+    getDailyState: function() {
+        try {
+            const state = JSON.parse(localStorage.getItem(SMTLE.config.DAILY_LIMIT_KEY) || '{}');
+            const today = new Date().toLocaleDateString();
+            if (state.date !== today) {
+                return { date: today, totalUsed: 0 };
+            }
+            return state;
+        } catch (e) {
+            console.error('Error parsing daily state:', e);
+            return { date: new Date().toLocaleDateString(), totalUsed: 0 };
+        }
+    },
+
+    saveDailyState: function(state) {
+        try {
+            localStorage.setItem(SMTLE.config.DAILY_LIMIT_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error('Error saving daily state:', e);
+        }
+    },
+
+    getTempLimitState: function() {
+        try {
+            return JSON.parse(localStorage.getItem(SMTLE.config.TEMP_LIMIT_KEY) || 'null');
+        } catch (e) {
+            console.error('Error parsing temp limit state:', e);
+            return null;
+        }
+    },
+
+    saveTempLimitState: function(state) {
+         try {
+            localStorage.setItem(SMTLE.config.TEMP_LIMIT_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error('Error setting temp limit:', e);
+            alert('⚠️ Failed to set temporary limit. Please try again.');
+        }
+    },
+
+    clearTempLimitState: function() {
+        try {
+            localStorage.removeItem(SMTLE.config.TEMP_LIMIT_KEY);
+        } catch (e) {
+            console.error('Error clearing temp limit state:', e);
+        }
     }
-}
+};
